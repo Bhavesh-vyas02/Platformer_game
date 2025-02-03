@@ -1,5 +1,7 @@
 import pygame
 from pygame.locals import *  # noqa - this is a hack to make pylint ignore the unused import
+import pickle
+from os import path
 
 pygame.init()  # Initialize pygame
 
@@ -17,6 +19,7 @@ pygame.display.set_caption('platformer')  # Display title for platformer
 tile_size = 35
 game_over = 0
 main_menu = True
+level = 1
 
 # load images
 sun_img = pygame.image.load('img/sun.png')
@@ -204,6 +207,9 @@ class world():
                 if tile == 6:
                     lava = Lava(col_count * tile_size, row_count * tile_size + (tile_size // 2))
                     lava_group.add(lava)
+                    if tile == 8:
+                        exit = Exit(col_count * tile_size, row_count * tile_size)
+                        exit_group.add(exit)
                 col_count += 1
             row_count +=1
     def draw(self):
@@ -237,33 +243,26 @@ class Lava(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.x = x
         self.rect.y = y
+class Exit(pygame.sprite.Sprite):
+    def __init__(self,x,y):
+        pygame.sprite.Sprite.__init__(self)
+        img = pygame.image.load('img/exit.png')
+        self.image = pygame.transform.scale(img, (tile_size, int(tile_size * 1.5)) ) 
+        self.rect = self.image.get_rect()
+        self.rect.x = x
+        self.rect.y = y
 
-world_data = [
-[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 ,1 , 1 , 1 ,1 ,1 , 1 , 1 , 1], 
-[1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 , 0 , 0 ,0 ,0 , 0 , 0 , 1], 
-[1, 0, 0, 0, 0, 7, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8, 0, 0 , 0 , 0 ,0 ,0 , 0 , 0 , 1], 
-[1, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 7, 0, 0, 0, 0, 0, 2, 2, 0, 0 , 0 , 0 ,0 ,0 , 0 , 0 , 1], 
-[1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2, 0, 7, 0, 5, 0, 0, 0, 0, 0 , 0 , 0 ,0 ,0 , 0 , 0 , 1], 
-[1, 0, 0, 0, 0, 0, 0, 0, 5, 0, 0, 0, 2, 2, 0, 0, 0, 0, 0, 0, 0 , 0 , 0 ,0 ,0 , 0 , 0 , 1], 
-[1, 7, 0, 0, 2, 2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 , 0 , 0 ,0 ,0 , 0 , 0 , 1], 
-[1, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 , 0 , 0 ,0 ,0 , 0 , 0 , 1], 
-[1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 7, 0, 0, 7, 0, 0, 0, 0, 0, 0 , 0 , 0 ,0 ,0 , 0 , 0 , 1], 
-[1, 0, 2, 0, 0, 7, 0, 7, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 , 0 , 0 ,0 ,0 , 0 , 0 , 1], 
-[1, 0, 0, 2, 0, 0, 4, 0, 0, 0, 0, 3, 0, 0, 3, 0, 0, 0, 0, 0, 0 , 0 , 0 ,0 ,0 , 0 , 0 , 1], 
-[1, 0, 0, 0, 0, 0, 0, 2, 2, 2, 2, 2, 2, 2, 2, 2, 0, 0, 0, 0, 0 , 0 , 0 ,0 ,0 , 0 , 0 , 1], 
-[1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 , 0 , 0 ,0 ,0 , 0 , 0 , 1], 
-[1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 7, 0, 7, 0, 0, 0, 0, 2, 0, 0, 0 , 0 , 0 ,0 ,0 , 0 , 0 , 1], 
-[1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 , 0 , 0 ,0 ,0 , 0 , 0 , 1], 
-[1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 2, 0, 2, 2, 2, 2, 2, 2, 2 , 2 , 2 ,2 ,2 , 2 , 2 , 1], 
-[1, 0, 0, 0, 0, 0, 2, 2, 2, 6, 6, 6, 6, 6, 1, 1, 1, 1, 1, 1, 1 , 1 , 1 ,1 ,1 , 1 , 1 , 1], 
-[1, 0, 0, 0, 0, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 , 1 , 1 ,1 ,1 , 1 , 1 , 1], 
-[1, 0, 0, 0, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 , 1 , 1 ,1 ,1 , 1 , 1 , 1], 
-[1, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 , 1 , 1 ,1 ,1 , 1 , 1 , 1]
-]
+
 
 player = player(70, screen_height - 95)
 blob_group = pygame.sprite.Group()
 lava_group = pygame.sprite.Group()
+exit_group = pygame.sprite.Group()
+
+# load in level data and create world
+if path.exists(f'level{level}_data'):
+    pickle_in = open(f'level{level}_data', 'rb')
+    world_data = pickle.load(pickle_in)
 world = world(world_data)
 
 # create button
